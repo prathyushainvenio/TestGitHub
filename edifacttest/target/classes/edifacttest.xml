@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:edifact-edi="http://www.mulesoft.org/schema/mule/edifact-edi" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/edifact-edi http://www.mulesoft.org/schema/mule/edifact-edi/current/mule-edifact-edi.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="localhost" port="8081" doc:name="HTTP Listener Configuration"/>
+    <edifact-edi:config name="EDIFACT_EDI" groupIdSelf="662424795PROD" groupIdPartner="Partner EDI ID" characterEncoding="ISO8859_1" sendSyntaxVersion="VERSION3" alwaysSendUNA="true" sendGroups="true" sendUniqueGroupNumbers="true" sendUniqueMessageNumbers="true" doc:name="EDIFACT EDI">
+        <edifact-edi:schemas>
+            <edifact-edi:schema>/edifact/d97a/ORDERS.esl</edifact-edi:schema>
+        </edifact-edi:schemas>
+    </edifact-edi:config>
+    <expression-filter expression="#[payload.Errors.size() &lt; 1]" name="Expression" doc:name="Expression"/>
+    <flow name="edifacttestFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/ValidateEDI" doc:name="HTTP"/>
+        <set-payload value="UNA:+.? '
+UNB+UNOC:3+662424795PROD:16+Partner EDI ID:Part+161115:1428+IG-74314734'
+UNG+ORDERS+662424795PROD+Partner EDI ID+161115:1428+FG-74314735+UN+D:97A'
+UNH+95068502+ORDERS:D:97A:UN'
+BGM+220+20161115+2'
+DTM+69:20161114150000UTC?+2:304'
+FTX+COI+++CLW'
+FTX+PRI++8'
+FTX+DEL++01'
+FTX+SSR+++02'
+FTX+CUR+++ [TELE 2]'
+FTX+PRD+++8:88LG:88LG80G'
+FTX+OSI+++This product has a one year limited warranty and is entitled to parts,:labor and carry-in repair service. In some countries, courier servicew:ill be provided. Many parts can also be delivered to you using theCust:omer Replaceable Unit (CRU) method.'
+FTX+DAR+++FAULTY HDD ON THE UNIT'
+FTX+MBD+++1/11C///'
+RFF+SZ:2D'
+RFF+CO:1234567890'
+DTM+4:20161115082719UTC?+2:304'
+RFF+PC:59431541'
+RFF+SE:YB06971112'
+RFF+ACW:LEB01417'
+NAD+SE+30008795++PartServe Channel Support Bloemfont'
+NAD+BY+HK08'
+NAD+OY+1601118188++Michael Nagel:BLO+Wilcocks Road Noordhoek:::16+Bloemfontein++9301+ZA'
+CTA+CR+:PartServe Channel Support Bloemfont'
+COM+mubeens@partserve.co.za:EM'
+COM+0030008781:TE'
+LIN+30'
+PIA+5+16200383'
+IMD+F++:::HDD_ASM ST500LT012 6G 7mm 5.4K 500G: HDD'
+QTY+21:1:KUA'
+DTM+69:20161114150000UTC?+2:304'
+FTX+OSI+++X'
+FTX+LIN+++ZSP1'
+FTX+AAG+++N'
+RFF+SE:11S0C55562ZVJ82US3V9T5'
+LIN+32+++1:30'
+PIA+5+INBHAN1'
+IMD+F++:::Inbound handling fee'
+QTY+21:1:EA'
+DTM+69::204'
+FTX+LIN+++ZRET'
+UNS+S'
+UNT+41+95068502'
+UNE+1+FG-74314735'
+UNZ+1+IG-74314734'
+" doc:name="Set Payload"/>
+        <edifact-edi:read config-ref="EDIFACT_EDI" doc:name="EDIFACT EDI"/>
+        <logger message="Edifact map after validation :: :: #[payload]" level="INFO" doc:name="Logger"/>
+        <filter ref="Expression" doc:name="Filter Reference"/>
+        <logger message=":: :: Successfully procesed Edifact content :: ::" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>
